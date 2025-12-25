@@ -1,0 +1,62 @@
+version: '3.9'
+services:
+  web:
+    image: nginx:1.21.6
+    networks:
+      - web-network
+    ports:
+      - "80:80"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+          
+  api:
+    image: python:3.9.6
+    build: ./api
+    command: python app.py
+    environment:
+      DB_HOST: db
+    secrets:
+      - db_password
+    networks:
+      - api-network
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 768M
+          
+  db:
+    image: mysql:8.0.27
+    networks:
+      - db-network
+    secrets:
+      - db_root_password
+    volumes:
+      - db-data:/var/lib/mysql
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  db_root_password:
+    file: ./secrets/db_root_password.txt
+
+volumes:
+  db-data:
+
+networks:
+  web-network:
+    driver: bridge
+  api-network:
+    driver: bridge
+  db-network:
+    driver: bridge
